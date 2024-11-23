@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <style> body { margin: 0; overflow: hidden; } </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "//unpkg.com/three/build/three.module.js",
+        "three/addons/": "//unpkg.com/three/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    window.THREE = THREE;
+  </script>
+
+  <style>
+    /* Global Styles */
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #recenter_click {
+      padding: 10px;
+      background-color: rgba(0, 60, 224, 0.73);
+      color: white;
+      text-align: center;
+      cursor: pointer;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+    }
+
+    /* Position the globe to take the whole screen */
+    #globeViz {
+      width: 50vw;
+      height: 50vh;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    /* Styling for the audio player controls */
+    .audio-player {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 5;
+      background-color: rgba(0, 0, 0, 0.3);
+      color: white;
+      padding: 5px;
+      border-radius: 5px;
+    }
+
+    .audio-player input {
+      margin-top: 10px;
+      width: 100px;
+    }
+
+    /* Info Section Styling */
+    #info {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+      z-index: 10;
+    }
+
+    #info a {
+      color: #fff;
+      text-decoration: none;
+    }
+
+    #info a:hover {
+      text-decoration: underline;
+    }
+
+    /* Settings Button */
+    #settings-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #4CAF50;
+      color: white;
+      padding: 15px;
+      border-radius: 50%;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 100;
+    }
+
+    /* The Overlay */
+    #settings-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+    }
+
+    /* The Settings Panel */
+    .settings-panel {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 30px;
+      width: 300px;
+      max-height: 400px;
+      overflow-y: auto;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Styling for slider */
+    #slider-container {
+      position: absolute;
+      top: 50px;
+      left: 10px;
+      z-index: 1;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 10px;
+      border-radius: 10px;
+    }
+    #slider {
+      width: 200px;
+    }
+    #slider-value {
+      color: white;
+      font-size: 14px;
+    }
+  </style>
+  <script src="//unpkg.com/three-globe" defer></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+
+  <!-- Recenter Button -->
+  <div id="recenter_click">Center Here!</div>
+
+  <!-- Audio Player Controls -->
+  <div class="audio-player">
+    <button id="position-display" style="width: 100%;" onclick="toggleAudio()">
+        <b id="play-pause-text">Play</b>
+    </button><br><br>
+    <gg id="position-display"><b>Time:</b> <span id="current-time">00:00:00</span><br></gg>
+    <input type="range" min="0" max="1" step="0.001" style="width: 50x;" id="time-slider" oninput="updateTime(this.value)">
+    <gg id="volume-label"><br><b>Volume: </b></gg>
+    <input type="range" min="0" max="1" step="0.001" style="width: 50px;" id="volume-slider" oninput="updateVolume(this.value)">
+  </div>
+
+  <!-- Settings Button -->
+  <button id="settings-btn">⚙️</button>
+
+  <!-- Settings Overlay -->
+  <div id="settings-overlay">
+        <div class="settings-panel">
+            <button class="close-btn" id="close-btn">×</button>
+            <h2>Settings</h2>
+            <div>
+                <label for="setting1">
+                    <input type="checkbox" id="setting1"> Magnitude Slider
+                </label>
+            </div>
+            <div>
+                <label for="setting2">
+                    <input type="checkbox" id="setting2"> Depth Slider
+                </label>
+            </div>
+            <div>
+                <label for="setting3">
+                    <input type="checkbox" id="setting3"> Enable Feature 3
+                </label>
+            </div>
+            <!-- Add more settings as needed -->
+        </div>
+  </div>
+
+  <!-- Globe Container -->
+  <div id="globeViz"></div>
+
+  <!-- Audio Element -->
+  <audio id="myAudio" preload="metadata">
+      <source src="https://audio.jukehost.co.uk/1by1gfpRvBpcajyLLMKx9MpT245C1js3" />
+  </audio>
+
+  <!-- Slider for magnitude filter -->
+  <div id="slider-container">
+        <input type="range" id="slider" min="0" max="10" step="0.1" value="0">
+        <span id="slider-value">Magnitude: 0</span>
+  </div>
+
+  <script>
+        // Get elements
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsOverlay = document.getElementById('settings-overlay');
+        const closeBtn = document.getElementById('close-btn');
+
+        // Toggle the overlay visibility when settings button is clicked
+        settingsBtn.addEventListener('click', () => {
+            settingsOverlay.style.display = 'flex';
+        });
+
+        // Close the overlay when the close button is clicked
+        closeBtn.addEventListener('click', () => {
+            settingsOverlay.style.display = 'none';
+        });
+
+        // Close the overlay if the user clicks outside of the settings panel
+        window.addEventListener('click', (event) => {
+            if (event.target === settingsOverlay) {
+                settingsOverlay.style.display = 'none';
+            }
+        });
+  </script>
+
+    <script type="module">
+        import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
+
+        // Function to convert latitude and longitude to Cartesian coordinates
+        function latLngToCartesian(lat, lng, radius) {
+            const phi = THREE.MathUtils.degToRad(90 - lat); // Latitude: 90 - latitude to convert to spherical coordinates
+            const theta = THREE.MathUtils.degToRad(lng + 180); // Longitude: Add 180 to match globe rotation
+
+            // Convert spherical coordinates to Cartesian
+            const x = radius * Math.sin(phi) * Math.cos(theta);
+            const y = radius * Math.cos(phi);
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+
+            return new THREE.Vector3(x, y, z);
+        }
+
+        // Function to create the globe from earthquake data
+        function createGlobeFromData(response) {
+            const colorInterpolator = (mag) => {
+                if (mag < 2.5) return "#00ff2c";
+                if (mag < 5.4) return "#0048ff";
+                if (mag < 6.0) return "#fec44f";
+                if (mag < 6.9) return "#d95f0e";
+                if (mag < 7.9) return "#f03b20";
+                return "#de2d26";
+            };
+
+            // Create an instance of the ThreeGlobe object
+            const Globe = new ThreeGlobe()
+                .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
+                .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png');
+
+            const renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('globeViz').appendChild(renderer.domElement);
+
+            const scene = new THREE.Scene();
+            scene.add(Globe);
+            scene.add(new THREE.AmbientLight(0xcccccc, Math.PI));
+            scene.add(new THREE.DirectionalLight(0xffffff, 0.6 * Math.PI));
+
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+            camera.position.set(-215, -165, 100);
+            camera.lookAt(-215, -165, 100);
+
+            const controls = new TrackballControls(camera, renderer.domElement);
+            controls.minDistance = 101;
+            controls.rotateSpeed = 5;
+            controls.zoomSpeed = 0.8;
+
+            (function animate() {
+                controls.update();
+                renderer.render(scene, camera);
+                requestAnimationFrame(animate);
+            })();
+
+            // Recenter camera
+            const recenterButton = document.getElementById('recenter_click');
+            recenterButton.addEventListener('click', function () {
+                const targetLatitude = -215;
+                const targetLongitude = -165;
+                const cameraDistance = 200;
+                const targetPosition = latLngToCartesian(targetLatitude, targetLongitude, cameraDistance);
+                camera.position.copy(targetPosition);
+                camera.lookAt(new THREE.Vector3(0, 0, 0));
+            });
+
+            // Initialize the globe with the default magnitude threshold
+            const initialThreshold = parseFloat(document.getElementById('slider').value);
+            updateGlobeData(response, Globe, initialThreshold);
+
+            // Slider functionality
+            const slider = document.getElementById('slider');
+            const sliderValue = document.getElementById('slider-value');
+
+            slider.addEventListener('input', function() {
+                const magnitudeThreshold = parseFloat(slider.value);
+                sliderValue.textContent = `Magnitude: ${magnitudeThreshold}`;
+                // Update the globe with the new magnitude threshold
+                updateGlobeData(response, Globe, magnitudeThreshold);
+            });
+        }
+
+        // Function to update the globe data based on the selected magnitude threshold
+        function updateGlobeData(response, Globe, magnitudeThreshold) {
+            const colorInterpolator = (mag) => {
+                if (mag < 2.5) return "#00ff2c";
+                if (mag < 5.4) return "#0048ff";
+                if (mag < 6.0) return "#fec44f";
+                if (mag < 6.9) return "#d95f0e";
+                if (mag < 7.9) return "#f03b20";
+                return "#de2d26";
+            };
+
+            // Filter earthquake data based on magnitude threshold
+            const filteredData = response.features.filter((feature) => {
+                const mag = feature.properties.mag;
+                return mag >= magnitudeThreshold;
+            }).map((feature) => {
+                const geometry = feature.geometry.coordinates;
+                const lat = geometry[1]; // Latitude
+                const lng = geometry[0]; // Longitude
+                const mag = feature.properties.mag;
+                const depth = geometry[2];
+
+                return {
+                    lat: lat,
+                    lng: lng,
+                    maxR: depth / 20,
+                    propagationSpeed: mag / 2,
+                    repeatPeriod: Math.random() * 50000 + 2000
+                };
+            });
+
+            // Update the globe with filtered earthquake data
+            Globe.ringsData(filteredData)
+                .ringColor((d) => colorInterpolator(d.propagationSpeed))
+                .ringMaxRadius('maxR')
+                .ringPropagationSpeed('propagationSpeed')
+                .ringRepeatPeriod('repeatPeriod');
+        }
+
+        // Fetch the earthquake data and initialize the globe
+        d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson").then(createGlobeFromData);
+    </script>
+
+  <script>
+    var audio = document.getElementById('myAudio');
+    var playPauseButton = document.getElementById('play-pause-text');
+    var timeSlider = document.getElementById('time-slider');
+    var volumeSlider = document.getElementById('volume-slider');
+    var currentTimeDisplay = document.getElementById('current-time');
+
+    window.onload = function() {
+      playPauseButton.innerHTML = "<b>Play</b>";
+    };
+
+    function toggleAudio() {
+      if (audio.paused) {
+        audio.play();
+        playPauseButton.innerHTML = "<b>Pause</b>";
+      } else {
+        audio.pause();
+        playPauseButton.innerHTML = "<b>Play</b>";
+      }
+    }
+
+    audio.ontimeupdate = function() {
+      var currentTime = audio.currentTime;
+      var duration = audio.duration;
+      var minutes = Math.floor(currentTime / 60);
+      var seconds = Math.floor(currentTime % 60);
+      var hours = Math.floor(minutes / 60);
+      minutes = minutes % 60;
+      currentTimeDisplay.innerHTML = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(seconds);
+      timeSlider.value = currentTime / duration;
+    };
+
+    function formatTime(time) {
+      return time < 10 ? "0" + time : time;
+    }
+
+    function updateTime(value) {
+      var duration = audio.duration;
+      audio.currentTime = value * duration;
+    }
+
+    function updateVolume(value) {
+      audio.volume = value;
+    }
+  </script>
+
+<!-- Info Section -->
+<div id="info" style="background-color: rgba(0, 0, 0, 0.7); padding: 10px; text-align: center;">
+    <strong style="color: white;">Created by <a href="https://github.com/myjineng" style="color: white;">Andrew Amato</a></strong>
+    <span class="bull" style="color: white;">•</span>
+    <a href="https://github.com/MyJineng/Live-Earthquake-Map" style="color: blue;">Source code</a>
+    <span class="bull" style="color: white;">•</span>
+    <a href="https://github.com/vasturiano/three-globe?tab=readme-ov-file" style="color: blue;">Powered by three-globe</a>
+    <span class="bull" style="color: white;">•</span>
+    <a href="https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson" style="color: blue;">Data sourced from usgs.gov</a>
+</div>
+
+</body>
+</html>
