@@ -129,20 +129,38 @@
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     }
 
-    /* Styling for slider */
-    #slider-container {
+    /* Styling for mag_slider */
+    #mag_slider-container {
       position: absolute;
       top: 50px;
       left: 10px;
       z-index: 1;
       background-color: rgba(0, 0, 0, 0.5);
-      padding: 10px;
-      border-radius: 10px;
+      padding: 5px;
+      border-radius: 5px;
     }
-    #slider {
-      width: 200px;
+    #mag_slider {
+      width: 100px;
     }
-    #slider-value {
+    #mag_slider-value {
+      color: white;
+      font-size: 14px;
+    }
+
+    /* Styling for depth_slider */
+    #depth_slider-container {
+      position: absolute;
+      top: 90px;
+      left: 10px;
+      z-index: 1;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 5px;
+      border-radius: 5px;
+    }
+    #depth_slider {
+      width: 100px;
+    }
+    #depth_slider-value {
       color: white;
       font-size: 14px;
     }
@@ -190,7 +208,6 @@
                     <input type="checkbox" id="setting3"> Enable Feature 3
                 </label>
             </div>
-            <!-- Add more settings as needed -->
         </div>
   </div>
 
@@ -203,34 +220,17 @@
   </audio>
 
   <!-- Slider for magnitude filter -->
-  <div id="slider-container">
-        <input type="range" id="slider" min="0" max="10" step="0.1" value="0">
-        <span id="slider-value">Magnitude: 0</span>
+  <div id="mag_slider-container">
+        <input type="range" id="mag_slider" min="0" max="10" step="0.1" value="0">
+        <span id="mag_slider-value">Magnitude: 0</span>
   </div>
 
-  <script>
-        // Get elements
-        const settingsBtn = document.getElementById('settings-btn');
-        const settingsOverlay = document.getElementById('settings-overlay');
-        const closeBtn = document.getElementById('close-btn');
+    <div id="depth_slider-container">
+        <input type="range" id="depth_slider" min="0" max="750" step="10" value="750">
+        <span id="depth_slider-value">Depth: 750</span>
+  </div>
 
-        // Toggle the overlay visibility when settings button is clicked
-        settingsBtn.addEventListener('click', () => {
-            settingsOverlay.style.display = 'flex';
-        });
-
-        // Close the overlay when the close button is clicked
-        closeBtn.addEventListener('click', () => {
-            settingsOverlay.style.display = 'none';
-        });
-
-        // Close the overlay if the user clicks outside of the settings panel
-        window.addEventListener('click', (event) => {
-            if (event.target === settingsOverlay) {
-                settingsOverlay.style.display = 'none';
-            }
-        });
-  </script>
+  <script src="static/js/settings.js"></script>
 
     <script type="module">
         import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
@@ -299,24 +299,43 @@
                 camera.lookAt(new THREE.Vector3(0, 0, 0));
             });
 
-            // Initialize the globe with the default magnitude threshold
-            const initialThreshold = parseFloat(document.getElementById('slider').value);
-            updateGlobeData(response, Globe, initialThreshold);
+            // Initialize the globe with the default magnitude and depth threshold
+            const initialThreshold = parseFloat(document.getElementById('mag_slider').value);
+            const initial_depth_threshold = parseFloat(document.getElementById('depth_slider').value);
+            updateGlobeData(response, Globe, initialThreshold, initial_depth_threshold);
 
             // Slider functionality
-            const slider = document.getElementById('slider');
-            const sliderValue = document.getElementById('slider-value');
+            const mag_slider = document.getElementById('mag_slider');
+            const mag_slider_value = document.getElementById('mag_slider-value');
 
-            slider.addEventListener('input', function() {
-                const magnitudeThreshold = parseFloat(slider.value);
-                sliderValue.textContent = `Magnitude: ${magnitudeThreshold}`;
-                // Update the globe with the new magnitude threshold
-                updateGlobeData(response, Globe, magnitudeThreshold);
+            const depth_slider = document.getElementById('depth_slider');
+            const depth_slider_value = document.getElementById('depth_slider-value');
+
+            depth_slider.addEventListener('input', function() {
+                const depthThreshold = parseFloat(depth_slider.value);  // Get the current value of the depth slider
+                depth_slider_value.textContent = `Depth: ${depthThreshold}`;  // Update the text content to show the current depth threshold
+
+                // Fetch the current magnitude threshold from the magnitude slider
+                const magnitudeThreshold = parseFloat(mag_slider.value);  // Dynamically get the magnitude threshold value
+
+                // Update the globe with the new magnitude and depth thresholds
+                updateGlobeData(response, Globe, magnitudeThreshold, depthThreshold);
+            });
+
+            mag_slider.addEventListener('input', function() {
+                const magnitudeThreshold = parseFloat(mag_slider.value);  // Get the current value of the magnitude slider
+                mag_slider_value.textContent = `Magnitude: ${magnitudeThreshold}`;  // Update the text content to show the current magnitude threshold
+
+                // Fetch the current depth threshold from the depth slider
+                const depthThreshold = parseFloat(depth_slider.value);  // Dynamically get the depth threshold value
+
+                // Update the globe with the new magnitude and depth thresholds
+                updateGlobeData(response, Globe, magnitudeThreshold, depthThreshold);
             });
         }
 
         // Function to update the globe data based on the selected magnitude threshold
-        function updateGlobeData(response, Globe, magnitudeThreshold) {
+        function updateGlobeData(response, Globe, magnitudeThreshold, depthThreshold) {
             const colorInterpolator = (mag) => {
                 if (mag < 2.5) return "#00ff2c";
                 if (mag < 5.4) return "#0048ff";
@@ -326,10 +345,13 @@
                 return "#de2d26";
             };
 
-            // Filter earthquake data based on magnitude threshold
+            // Filter earthquake data based on magnitude and depth threshold
             const filteredData = response.features.filter((feature) => {
                 const mag = feature.properties.mag;
-                return mag >= magnitudeThreshold;
+                const depth = feature.geometry.coordinates[2];
+
+                // Apply both magnitude and depth filters
+                return mag >= magnitudeThreshold && depth <= depthThreshold;
             }).map((feature) => {
                 const geometry = feature.geometry.coordinates;
                 const lat = geometry[1]; // Latitude
@@ -357,52 +379,8 @@
         // Fetch the earthquake data and initialize the globe
         d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson").then(createGlobeFromData);
     </script>
-
-  <script>
-    var audio = document.getElementById('myAudio');
-    var playPauseButton = document.getElementById('play-pause-text');
-    var timeSlider = document.getElementById('time-slider');
-    var volumeSlider = document.getElementById('volume-slider');
-    var currentTimeDisplay = document.getElementById('current-time');
-
-    window.onload = function() {
-      playPauseButton.innerHTML = "<b>Play</b>";
-    };
-
-    function toggleAudio() {
-      if (audio.paused) {
-        audio.play();
-        playPauseButton.innerHTML = "<b>Pause</b>";
-      } else {
-        audio.pause();
-        playPauseButton.innerHTML = "<b>Play</b>";
-      }
-    }
-
-    audio.ontimeupdate = function() {
-      var currentTime = audio.currentTime;
-      var duration = audio.duration;
-      var minutes = Math.floor(currentTime / 60);
-      var seconds = Math.floor(currentTime % 60);
-      var hours = Math.floor(minutes / 60);
-      minutes = minutes % 60;
-      currentTimeDisplay.innerHTML = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(seconds);
-      timeSlider.value = currentTime / duration;
-    };
-
-    function formatTime(time) {
-      return time < 10 ? "0" + time : time;
-    }
-
-    function updateTime(value) {
-      var duration = audio.duration;
-      audio.currentTime = value * duration;
-    }
-
-    function updateVolume(value) {
-      audio.volume = value;
-    }
-  </script>
+<!-- Audio -->
+  <script src="static/js/audio.js"></script>
 
 <!-- Info Section -->
 <div id="info" style="background-color: rgba(0, 0, 0, 0.7); padding: 10px; text-align: center;">
