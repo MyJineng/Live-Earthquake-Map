@@ -20,6 +20,51 @@
             }
         });
 
+    // Get the checkboxes and sliders
+    const setting1 = document.getElementById('setting1');
+    const setting2 = document.getElementById('setting2');
+    const setting3 = document.getElementById('setting3');
+    const magSliderContainer = document.getElementById('mag_slider-container');
+    const depthSliderContainer = document.getElementById('depth_slider-container');
+    const audioplayer = document.querySelector('.audio-player'); // Corrected from getElementByClass to querySelector
+
+    // Function to update the visibility of sliders based on settings
+    function updateSliderVisibility() {
+        // Toggle visibility of the magnitude slider based on setting1 checkbox
+        if (setting1.checked) {
+            magSliderContainer.style.display = 'block'; // Show the magnitude slider
+        } else {
+            magSliderContainer.style.display = 'none'; // Hide the magnitude slider
+        }
+
+        // Toggle visibility of the depth slider based on setting2 checkbox
+        if (setting2.checked) {
+            depthSliderContainer.style.display = 'block'; // Show the depth slider
+        } else {
+            depthSliderContainer.style.display = 'none'; // Hide the depth slider
+        }
+
+        // Toggle visibility of the audio player based on setting3 checkbox
+        if (setting3.checked) {
+            audioplayer.style.display = 'block'; // Show the audio player
+        } else {
+            audioplayer.style.display = 'none'; // Hide the audio player
+        }
+    }
+
+    // Add event listeners to update visibility when settings are changed
+    setting1.addEventListener('change', updateSliderVisibility);
+    setting2.addEventListener('change', updateSliderVisibility);
+    setting3.addEventListener('change', updateSliderVisibility);
+
+    // Initialize the checkboxes to be checked and update visibility accordingly
+    document.getElementById('setting1').checked = true;
+    document.getElementById('setting2').checked = true;
+    document.getElementById('setting3').checked = true;
+
+    // Initialize visibility on page load
+    updateSliderVisibility();
+
 // Function to calculate the average, min, and max depth values
 function calculateDepthStats(features) {
     let depths = [];

@@ -180,9 +180,9 @@
         <b id="play-pause-text">Play</b>
     </button><br><br>
     <gg id="position-display"><b>Time:</b> <span id="current-time">00:00:00</span><br></gg>
-    <input type="range" min="0" max="1" step="0.001" style="width: 50x;" id="time-slider" oninput="updateTime(this.value)">
+    <input type="range" min="0" max="1" value= "0" step="0.001" style="width: 50x;" id="time-slider" oninput="updateTime(this.value)">
     <gg id="volume-label"><br><b>Volume: </b></gg>
-    <input type="range" min="0" max="1" step="0.001" style="width: 50px;" id="volume-slider" oninput="updateVolume(this.value)">
+    <input type="range" min="0" max="1" value="1" step="0.001" style="width: 50px;" id="volume-slider" oninput="updateVolume(this.value)">
   </div>
 
   <!-- Settings Button -->
@@ -205,7 +205,7 @@
             </div>
             <div>
                 <label for="setting3">
-                    <input type="checkbox" id="setting3"> Enable Feature 3
+                    <input type="checkbox" id="setting3"> Audio Player
                 </label>
             </div>
         </div>
