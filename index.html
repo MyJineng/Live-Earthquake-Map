@@ -208,6 +208,11 @@
                     <input type="checkbox" id="setting3"> Audio Player
                 </label>
             </div>
+            <div>
+                <label for="setting4">
+                    <input type="checkbox" id="setting4"> Tectonic Plates
+                </label>
+            </div>
         </div>
   </div>
 
@@ -297,6 +302,18 @@
                 const targetPosition = latLngToCartesian(targetLatitude, targetLongitude, cameraDistance);
                 camera.position.copy(targetPosition);
                 camera.lookAt(new THREE.Vector3(0, 0, 0));
+            });
+
+            // Checkbox to change tectonic plates image
+            const tectonicPlatesCheckbox = document.getElementById('setting4');
+            tectonicPlatesCheckbox.addEventListener('change', function() {
+                if (tectonicPlatesCheckbox.checked) {
+                    // Change globe image if checkbox is checked
+                    Globe.globeImageUrl('static/tectonic_plates.png');
+                } else {
+                    // Revert back to default globe image
+                    Globe.globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg');
+                }
             });
 
             // Initialize the globe with the default magnitude and depth threshold
