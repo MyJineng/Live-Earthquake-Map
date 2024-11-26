@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <style> body { margin: 0; overflow: hidden; } </style>
+  <link rel="stylesheet" href="static/css/style.css">
 
   <script type="importmap">
     {
@@ -20,151 +20,6 @@
     window.THREE = THREE;
   </script>
 
-  <style>
-    /* Global Styles */
-    body {
-      margin: 0;
-      overflow: hidden;
-    }
-
-    #recenter_click {
-      padding: 10px;
-      background-color: rgba(0, 60, 224, 0.73);
-      color: white;
-      text-align: center;
-      cursor: pointer;
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 10;
-    }
-
-    /* Position the globe to take the whole screen */
-    #globeViz {
-      width: 50vw;
-      height: 50vh;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 1;
-    }
-
-    /* Styling for the audio player controls */
-    .audio-player {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 5;
-      background-color: rgba(0, 0, 0, 0.3);
-      color: white;
-      padding: 5px;
-      border-radius: 5px;
-    }
-
-    .audio-player input {
-      margin-top: 10px;
-      width: 100px;
-    }
-
-    /* Info Section Styling */
-    #info {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      color: white;
-      padding: 10px;
-      text-align: center;
-      font-size: 14px;
-      z-index: 10;
-    }
-
-    #info a {
-      color: #fff;
-      text-decoration: none;
-    }
-
-    #info a:hover {
-      text-decoration: underline;
-    }
-
-    /* Settings Button */
-    #settings-btn {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: #4CAF50;
-      color: white;
-      padding: 15px;
-      border-radius: 50%;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      z-index: 100;
-    }
-
-    /* The Overlay */
-    #settings-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.8);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 50;
-    }
-
-    /* The Settings Panel */
-    .settings-panel {
-      background-color: #fff;
-      border-radius: 8px;
-      padding: 30px;
-      width: 300px;
-      max-height: 400px;
-      overflow-y: auto;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    }
-
-    /* Styling for mag_slider */
-    #mag_slider-container {
-      position: absolute;
-      top: 50px;
-      left: 10px;
-      z-index: 1;
-      background-color: rgba(0, 0, 0, 0.5);
-      padding: 5px;
-      border-radius: 5px;
-    }
-    #mag_slider {
-      width: 100px;
-    }
-    #mag_slider-value {
-      color: white;
-      font-size: 14px;
-    }
-
-    /* Styling for depth_slider */
-    #depth_slider-container {
-      position: absolute;
-      top: 90px;
-      left: 10px;
-      z-index: 1;
-      background-color: rgba(0, 0, 0, 0.5);
-      padding: 5px;
-      border-radius: 5px;
-    }
-    #depth_slider {
-      width: 100px;
-    }
-    #depth_slider-value {
-      color: white;
-      font-size: 14px;
-    }
-  </style>
   <script src="//unpkg.com/three-globe" defer></script>
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
@@ -213,11 +68,31 @@
                     <input type="checkbox" id="setting4"> Tectonic Plates
                 </label>
             </div>
+            <div>
+                <label for="setting5">
+                    <input type="checkbox" id="setting5"> Quake Labels
+                </label>
+            </div>
         </div>
   </div>
 
-  <!-- Globe Container -->
-  <div id="globeViz"></div>
+    <!-- Globe Container -->
+    <div id="globeViz"></div>
+
+    <!-- Earthquake Table Section -->
+    <div id="earthquakeSection">
+      <h2>Earthquake Data</h2>
+      <table id="earthquakeTable">
+        <thead>
+          <tr>
+            <th>Place</th>
+            <th>Magnitude</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
   <!-- Audio Element -->
   <audio id="myAudio" preload="metadata">
@@ -399,6 +274,23 @@
 <!-- Audio -->
   <script src="static/js/audio.js"></script>
 
+
+<script>
+    d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson")
+      .then(function(response) {
+        let features = response.features;
+        let tableBody = d3.select("#earthquakeTable tbody");
+
+        for (let i = 0; i < 20; i++) {
+          let properties = features[i].properties;
+          let row = tableBody.append("tr");
+          row.append("td").text(properties.place);
+          row.append("td").text(properties.mag);
+          row.append("td").text(new Date(properties.time).toLocaleString());
+        }
+      });
+</script>
+
 <!-- Info Section -->
 <div id="info" style="background-color: rgba(0, 0, 0, 0.7); padding: 10px; text-align: center;">
     <strong style="color: white;">Created by <a href="https://github.com/myjineng" style="color: white;">Andrew Amato</a></strong>
@@ -411,4 +303,5 @@
 </div>
 
 </body>
+
 </html>
