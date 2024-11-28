@@ -82,6 +82,14 @@
     <!-- Earthquake Table Section -->
     <div id="earthquakeSection">
       <h2 class="glowing-text">Earthquake Data</h2>
+          <!-- Table Filter Buttons -->
+    <button id="lastHour">Last Hour</button>
+    <button id="lastDay">Last 24 Hours</button>
+    <button id="lastMonth">Last Month</button>
+    <label for="customDate">Custom Date Range: </label>
+    <input type="datetime-local" id="customDateFrom">
+    <input type="datetime-local" id="customDateTo">
+    <button id="filterCustom">Filter Custom Range</button>
       <table id="earthquakeTable">
         <thead>
           <tr>
@@ -95,15 +103,6 @@
         <tbody></tbody>
       </table>
     </div>
-
-  <!-- Table Filter Buttons -->
-    <button id="lastHour">Last Hour</button>
-    <button id="lastDay">Last 24 Hours</button>
-    <button id="lastMonth">Last Month</button>
-    <label for="customDate">Custom Date Range: </label>
-    <input type="datetime-local" id="customDateFrom">
-    <input type="datetime-local" id="customDateTo">
-    <button id="filterCustom">Filter Custom Range</button>
 
 
   <!-- Audio Element -->
@@ -303,7 +302,11 @@
                             .append("input")
                             .attr("type", "checkbox")
                             .attr("class", "earthquake-checkbox");
-                        row.append("td").text(properties.mag.toFixed(2));
+                        if (properties.mag != null) {
+                            row.append("td").text(properties.mag.toFixed(2));
+                            } else {
+                            row.append("td").text("No Data");  // Handle missing mag value
+                            }
                         row.append("td").text(feature.geometry.coordinates[2].toFixed(2));
                         row.append("td").text(new Date(properties.time).toLocaleString());
                     });
