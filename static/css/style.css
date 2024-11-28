@@ -1,3 +1,11 @@
+/* Ensure that html and body take full height */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%; /* Full height */
+  overflow: visible; /* Prevent scrolling */
+}
+
 #globeViz {
   width: 100%;
   height: 100%;
@@ -12,7 +20,7 @@ background-color: rgba(0, 60, 224, 0.73);
 color: white;
 text-align: center;
 cursor: pointer;
-position: fixed;
+position: absolute;
 top: 10px;
 left: 10px;
 z-index: 10;
@@ -158,4 +166,59 @@ font-size: 14px;
 
 #earthquakeTable th {
   background-color: #f2f2f2;
+}
+
+/* Glowing text effect */
+.glowing-text {
+  font-size: 2em; /* Adjust the font size as needed */
+  color: white; /* Text color */
+  text-align: center; /* Center-align the text */
+  text-shadow:
+    0 0 5px #ff0000,   /* Red glow */
+    0 0 10px #ff0000,  /* Red glow */
+    0 0 15px #ff0000,  /* Red glow */
+    0 0 20px #ff4500,  /* Orange glow */
+    0 0 30px #ff4500,  /* Orange glow */
+    0 0 40px #ff4500,  /* Orange glow */
+    0 0 50px #ff4500;  /* Orange glow */
+  animation: glowing 1.5s infinite alternate;
+}
+
+/* Animation for the glow effect */
+@keyframes glowing {
+  0% {
+    text-shadow:
+      0 0 5px #ff0000,
+      0 0 10px #ff0000,
+      0 0 15px #ff0000,
+      0 0 20px #ff4500,
+      0 0 30px #ff4500,
+      0 0 40px #ff4500,
+      0 0 50px #ff4500;
+  }
+  100% {
+    text-shadow:
+      0 0 10px #ff0000,
+      0 0 20px #ff0000,
+      0 0 30px #ff0000,
+      0 0 40px #ff4500,
+      0 0 50px #ff4500,
+      0 0 60px #ff4500,
+      0 0 70px #ff4500;
+  }
+}
+
+#searchBar {
+    margin-bottom: 20px;
+    padding: 5px;
+    width: 300px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #ddd;
 }

@@ -81,11 +81,11 @@
 
     <!-- Earthquake Table Section -->
     <div id="earthquakeSection">
-      <h2>Earthquake Data</h2>
+      <h2 class="glowing-text">Earthquake Data</h2>
       <table id="earthquakeTable">
         <thead>
           <tr>
-            <th>Place</th>
+            <th>Place <input type="text" id="searchBar" placeholder="Search... " /></th>
             <th>Magnitude</th>
             <th>Time</th>
           </tr>
@@ -274,21 +274,42 @@
 <!-- Audio -->
   <script src="static/js/audio.js"></script>
 
-
 <script>
-    d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson")
-      .then(function(response) {
-        let features = response.features;
-        let tableBody = d3.select("#earthquakeTable tbody");
+        d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson")
+            .then(function(response) {
+                let features = response.features;
+                let tableBody = d3.select("#earthquakeTable tbody");
 
-        for (let i = 0; i < 20; i++) {
-          let properties = features[i].properties;
-          let row = tableBody.append("tr");
-          row.append("td").text(properties.place);
-          row.append("td").text(properties.mag);
-          row.append("td").text(new Date(properties.time).toLocaleString());
-        }
-      });
+                // Function to render the table rows
+                function renderTable(data) {
+                    tableBody.html(""); // Clear the existing table
+                    data.forEach(function(feature) {
+                        let properties = feature.properties;
+                        let row = tableBody.append("tr");
+                        row.append("td").text(properties.place);
+                        row.append("td").text(properties.mag);
+                        row.append("td").text(new Date(properties.time).toLocaleString());
+                    });
+                }
+
+                // Initially render the first 20 earthquakes
+                renderTable(features.slice(0, 20));
+
+                // Add event listener to the search bar
+                d3.select("#searchBar").on("input", function() {
+                    let searchTerm = this.value.toLowerCase();
+                    // Filter earthquakes based on the search term
+                    let filteredFeatures = features.filter(function(feature) {
+                        let place = feature.properties.place.toLowerCase();
+                        return place.includes(searchTerm);
+                    });
+                    // Render filtered results
+                    renderTable(filteredFeatures.slice(0, 20));
+                });
+            })
+            .catch(function(error) {
+                console.error("Error fetching the earthquake data: ", error);
+            });
 </script>
 
 <!-- Info Section -->
