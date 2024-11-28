@@ -47,32 +47,20 @@
         } else {
             audioplayer.style.display = 'none'; // Hide the audio player
         }
-
-        if (setting4.checked) {
-            plates.style.display = 'block'; // Show the audio player
-        } else {
-            plates.style.display = 'none'; // Hide the audio player
-        }
-
-        if (setting5.checked) {
-            quake_labels.style.display = 'block'; // Show the audio player
-        } else {
-            quake_labels.style.display = 'none'; // Hide the audio player
-        }
     }
 
     // Add event listeners to update visibility when settings are changed
     setting1.addEventListener('change', updateSliderVisibility);
     setting2.addEventListener('change', updateSliderVisibility);
     setting3.addEventListener('change', updateSliderVisibility);
-    setting4.addEventListener('change'), updateSliderVisibility;
-    setting5.addEventListener('change'), updateSliderVisibility;
+    setting4.addEventListener('change', updateSliderVisibility);
+    setting5.addEventListener('change', updateSliderVisibility);
     // Initialize the checkboxes to be checked and update visibility accordingly
     document.getElementById('setting1').checked = true;
     document.getElementById('setting2').checked = true;
     document.getElementById('setting3').checked = true;
-    document.getElementById('setting4').checked = true;
-    document.getElementById('setting5').checked = true;
+    document.getElementById('setting4').checked = false;
+    document.getElementById('setting5').checked = false;
     // Initialize visibility on page load
     updateSliderVisibility();
 

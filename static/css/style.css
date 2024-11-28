@@ -208,9 +208,8 @@ font-size: 14px;
   }
 }
 
-#searchBar {
-    margin-bottom: 20px;
-    padding: 5px;
+#searchBar {;
+    margin-left: 20px;
     width: 300px;
 }
 table {

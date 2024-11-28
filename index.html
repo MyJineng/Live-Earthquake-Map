@@ -86,13 +86,25 @@
         <thead>
           <tr>
             <th>Place <input type="text" id="searchBar" placeholder="Search... " /></th>
+            <th>Map Select</th>
             <th>Magnitude</th>
+            <th>Depth (km)</th>
             <th>Time</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
+
+  <!-- Table Filter Buttons -->
+    <button id="lastHour">Last Hour</button>
+    <button id="lastDay">Last 24 Hours</button>
+    <button id="lastMonth">Last Month</button>
+    <label for="customDate">Custom Date Range: </label>
+    <input type="datetime-local" id="customDateFrom">
+    <input type="datetime-local" id="customDateTo">
+    <button id="filterCustom">Filter Custom Range</button>
+
 
   <!-- Audio Element -->
   <audio id="myAudio" preload="metadata">
@@ -274,43 +286,80 @@
 <!-- Audio -->
   <script src="static/js/audio.js"></script>
 
-<script>
+  <script>
         d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson")
             .then(function(response) {
                 let features = response.features;
                 let tableBody = d3.select("#earthquakeTable tbody");
 
-                // Function to render the table rows
                 function renderTable(data) {
                     tableBody.html(""); // Clear the existing table
                     data.forEach(function(feature) {
                         let properties = feature.properties;
                         let row = tableBody.append("tr");
+
                         row.append("td").text(properties.place);
-                        row.append("td").text(properties.mag);
+                        row.append("td")
+                            .append("input")
+                            .attr("type", "checkbox")
+                            .attr("class", "earthquake-checkbox");
+                        row.append("td").text(properties.mag.toFixed(2));
+                        row.append("td").text(feature.geometry.coordinates[2].toFixed(2));
                         row.append("td").text(new Date(properties.time).toLocaleString());
                     });
                 }
 
-                // Initially render the first 20 earthquakes
-                renderTable(features.slice(0, 20));
+                function filterByTimeRange(startTime, endTime) {
+                    return features.filter(function(feature) {
+                        let earthquakeTime = new Date(feature.properties.time);
+                        return earthquakeTime >= startTime && earthquakeTime <= endTime;
+                    });
+                }
+
+                // Render the full table initially
+                renderTable(features);
+
+                // Event listeners for predefined time filters
+                d3.select("#lastHour").on("click", function() {
+                    let oneHourAgo = new Date();
+                    oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+                    let filteredData = filterByTimeRange(oneHourAgo, new Date());
+                    renderTable(filteredData);
+                });
+
+                d3.select("#lastDay").on("click", function() {
+                    let oneDayAgo = new Date();
+                    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+                    let filteredData = filterByTimeRange(oneDayAgo, new Date());
+                    renderTable(filteredData);
+                });
+
+                d3.select("#lastMonth").on("click", function() {
+                    let oneMonthAgo = new Date();
+                    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+                    let filteredData = filterByTimeRange(oneMonthAgo, new Date());
+                    renderTable(filteredData);
+                });
+
+                // Event listener for custom date range
+                d3.select("#filterCustom").on("click", function() {
+                    let fromDate = new Date(d3.select("#customDateFrom").property("value"));
+                    let toDate = new Date(d3.select("#customDateTo").property("value"));
+                    let filteredData = filterByTimeRange(fromDate, toDate);
+                    renderTable(filteredData);
+                });
 
                 // Add event listener to the search bar
                 d3.select("#searchBar").on("input", function() {
                     let searchTerm = this.value.toLowerCase();
-                    // Filter earthquakes based on the search term
                     let filteredFeatures = features.filter(function(feature) {
                         let place = feature.properties.place.toLowerCase();
                         return place.includes(searchTerm);
                     });
-                    // Render filtered results
-                    renderTable(filteredFeatures.slice(0, 20));
+                    renderTable(filteredFeatures);
                 });
-            })
-            .catch(function(error) {
-                console.error("Error fetching the earthquake data: ", error);
             });
-</script>
+    </script>
 
 <!-- Info Section -->
 <div id="info" style="background-color: rgba(0, 0, 0, 0.7); padding: 10px; text-align: center;">
