@@ -90,11 +90,12 @@
     <input type="datetime-local" id="customDateFrom">
     <input type="datetime-local" id="customDateTo">
     <button id="filterCustom">Filter Custom Range</button>
+    <button id="filter_button">Apply Filters</button>
       <table id="earthquakeTable">
         <thead>
           <tr>
             <th>Place <input type="text" id="searchBar" placeholder="Search... " /></th>
-            <th>Map Select</th>
+            <th>Globe Filter</th>
             <th>Magnitude</th>
             <th>Depth (km)</th>
             <th>Time</th>
@@ -123,165 +124,181 @@
 
   <script src="static/js/settings.js"></script>
 
-    <script type="module">
-        import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
+<script type="module">
+    import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 
-        // Function to convert latitude and longitude to Cartesian coordinates
-        function latLngToCartesian(lat, lng, radius) {
-            const phi = THREE.MathUtils.degToRad(90 - lat); // Latitude: 90 - latitude to convert to spherical coordinates
-            const theta = THREE.MathUtils.degToRad(lng + 180); // Longitude: Add 180 to match globe rotation
+    // Function to convert latitude and longitude to Cartesian coordinates
+    function latLngToCartesian(lat, lng, radius) {
+        const phi = THREE.MathUtils.degToRad(90 - lat); // Latitude: 90 - latitude to convert to spherical coordinates
+        const theta = THREE.MathUtils.degToRad(lng + 180); // Longitude: Add 180 to match globe rotation
 
-            // Convert spherical coordinates to Cartesian
-            const x = radius * Math.sin(phi) * Math.cos(theta);
-            const y = radius * Math.cos(phi);
-            const z = radius * Math.sin(phi) * Math.sin(theta);
+        // Convert spherical coordinates to Cartesian
+        const x = radius * Math.sin(phi) * Math.cos(theta);
+        const y = radius * Math.cos(phi);
+        const z = radius * Math.sin(phi) * Math.sin(theta);
 
-            return new THREE.Vector3(x, y, z);
-        }
+        return new THREE.Vector3(x, y, z);
+    }
 
-        // Function to create the globe from earthquake data
-        function createGlobeFromData(response) {
-            const colorInterpolator = (mag) => {
-                if (mag < 2.5) return "#00ff2c";
-                if (mag < 5.4) return "#0048ff";
-                if (mag < 6.0) return "#fec44f";
-                if (mag < 6.9) return "#d95f0e";
-                if (mag < 7.9) return "#f03b20";
-                return "#de2d26";
+    // Function to create the globe from earthquake data
+    function createGlobeFromData(response) {
+        const colorInterpolator = (mag) => {
+            if (mag < 2.5) return "#00ff2c";
+            if (mag < 5.4) return "#0048ff";
+            if (mag < 6.0) return "#fec44f";
+            if (mag < 6.9) return "#d95f0e";
+            if (mag < 7.9) return "#f03b20";
+            return "#de2d26";
+        };
+
+        // Create an instance of the ThreeGlobe object
+        const Globe = new ThreeGlobe()
+            .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
+            .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png');
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('globeViz').appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        scene.add(Globe);
+        scene.add(new THREE.AmbientLight(0xcccccc, Math.PI));
+        scene.add(new THREE.DirectionalLight(0xffffff, 0.6 * Math.PI));
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+        camera.position.set(-215, -165, 100);
+        camera.lookAt(-215, -165, 100);
+
+        const controls = new TrackballControls(camera, renderer.domElement);
+        controls.minDistance = 101;
+        controls.rotateSpeed = 5;
+        controls.zoomSpeed = 0.8;
+
+        (function animate() {
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        })();
+
+        // Recenter camera
+        const recenterButton = document.getElementById('recenter_click');
+        recenterButton.addEventListener('click', function () {
+            const targetLatitude = -215;
+            const targetLongitude = -165;
+            const cameraDistance = 200;
+            const targetPosition = latLngToCartesian(targetLatitude, targetLongitude, cameraDistance);
+            camera.position.copy(targetPosition);
+            camera.lookAt(new THREE.Vector3(0, 0, 0));
+        });
+
+        // Checkbox to change tectonic plates image
+        const tectonicPlatesCheckbox = document.getElementById('setting4');
+        tectonicPlatesCheckbox.addEventListener('change', function() {
+            if (tectonicPlatesCheckbox.checked) {
+                // Change globe image if checkbox is checked
+                Globe.globeImageUrl('static/tectonic_plates.png');
+            } else {
+                // Revert back to default globe image
+                Globe.globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg');
+            }
+        });
+
+        // Initialize the globe with the default magnitude and depth threshold
+        const initialThreshold = parseFloat(document.getElementById('mag_slider').value);
+        const initial_depth_threshold = parseFloat(document.getElementById('depth_slider').value);
+        updateGlobeData(response, Globe, initialThreshold, initial_depth_threshold);
+
+        // Slider functionality
+        const mag_slider = document.getElementById('mag_slider');
+        const mag_slider_value = document.getElementById('mag_slider-value');
+
+        const depth_slider = document.getElementById('depth_slider');
+        const depth_slider_value = document.getElementById('depth_slider-value');
+
+        depth_slider.addEventListener('input', function() {
+            const depthThreshold = parseFloat(depth_slider.value);  // Get the current value of the depth slider
+            depth_slider_value.textContent = `Depth: ${depthThreshold}`;  // Update the text content to show the current depth threshold
+
+            // Fetch the current magnitude threshold from the magnitude slider
+            const magnitudeThreshold = parseFloat(mag_slider.value);  // Dynamically get the magnitude threshold value
+
+            // Update the globe with the new magnitude and depth thresholds
+            updateGlobeData(response, Globe, magnitudeThreshold, depthThreshold);
+        });
+
+        mag_slider.addEventListener('input', function() {
+            const magnitudeThreshold = parseFloat(mag_slider.value);  // Get the current value of the magnitude slider
+            mag_slider_value.textContent = `Magnitude: ${magnitudeThreshold}`;  // Update the text content to show the current magnitude threshold
+
+            // Fetch the current depth threshold from the depth slider
+            const depthThreshold = parseFloat(depth_slider.value);  // Dynamically get the depth threshold value
+
+            // Update the globe with the new magnitude and depth thresholds
+            updateGlobeData(response, Globe, magnitudeThreshold, depthThreshold);
+        });
+
+        // Add event listener for filter button
+        const filterButton = document.getElementById('filter_button');
+        filterButton.addEventListener('click', function() {
+            const magnitudeThreshold = parseFloat(mag_slider.value);  // Get the current value of the magnitude slider
+            const depthThreshold = parseFloat(depth_slider.value);  // Get the current value of the depth slider
+
+            // Update the globe with the new magnitude and depth thresholds
+            updateGlobeData(response, Globe, magnitudeThreshold, depthThreshold);
+        });
+    }
+
+    // Function to update the globe data based on the selected magnitude threshold
+    function updateGlobeData(response, Globe, magnitudeThreshold, depthThreshold) {
+        const colorInterpolator = (mag) => {
+            if (mag < 2.5) return "#00ff2c";
+            if (mag < 5.4) return "#0048ff";
+            if (mag < 6.0) return "#fec44f";
+            if (mag < 6.9) return "#d95f0e";
+            if (mag < 7.9) return "#f03b20";
+            return "#de2d26";
+        };
+
+        // Filter earthquake data based on magnitude and depth threshold
+        const filteredData = response.features.filter((feature) => {
+            const mag = feature.properties.mag;
+            const depth = feature.geometry.coordinates[2];
+            // Apply both magnitude and depth filters
+            return mag >= magnitudeThreshold && depth <= depthThreshold;
+        }).map((feature) => {
+            const geometry = feature.geometry.coordinates;
+            const lat = geometry[1]; // Latitude
+            const lng = geometry[0]; // Longitude
+            const mag = feature.properties.mag;
+            const depth = geometry[2];
+
+            let maxR;
+            if (mag > 6.0) {
+                maxR = depth + 1;  // Emphasizes Mag - a 7.1 earthquake was not showing up before
+            } else {
+                maxR = depth / 20;
+            }
+
+            return {
+                lat: lat,
+                lng: lng,
+                maxR: maxR,
+                propagationSpeed: mag / 2,
+                repeatPeriod: Math.random() * 50000 + 2000
             };
+        });
 
-            // Create an instance of the ThreeGlobe object
-            const Globe = new ThreeGlobe()
-                .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
-                .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png');
+        // Update the globe with filtered earthquake data
+        Globe.ringsData(filteredData)
+            .ringColor((d) => colorInterpolator(d.propagationSpeed * 2)) // Needs to cancel out propagation delay
+            .ringMaxRadius('maxR')
+            .ringPropagationSpeed('propagationSpeed')
+            .ringRepeatPeriod('repeatPeriod');
+    }
 
-            const renderer = new THREE.WebGLRenderer();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.getElementById('globeViz').appendChild(renderer.domElement);
-
-            const scene = new THREE.Scene();
-            scene.add(Globe);
-            scene.add(new THREE.AmbientLight(0xcccccc, Math.PI));
-            scene.add(new THREE.DirectionalLight(0xffffff, 0.6 * Math.PI));
-
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
-            camera.position.set(-215, -165, 100);
-            camera.lookAt(-215, -165, 100);
-
-            const controls = new TrackballControls(camera, renderer.domElement);
-            controls.minDistance = 101;
-            controls.rotateSpeed = 5;
-            controls.zoomSpeed = 0.8;
-
-            (function animate() {
-                controls.update();
-                renderer.render(scene, camera);
-                requestAnimationFrame(animate);
-            })();
-
-            // Recenter camera
-            const recenterButton = document.getElementById('recenter_click');
-            recenterButton.addEventListener('click', function () {
-                const targetLatitude = -215;
-                const targetLongitude = -165;
-                const cameraDistance = 200;
-                const targetPosition = latLngToCartesian(targetLatitude, targetLongitude, cameraDistance);
-                camera.position.copy(targetPosition);
-                camera.lookAt(new THREE.Vector3(0, 0, 0));
-            });
-
-            // Checkbox to change tectonic plates image
-            const tectonicPlatesCheckbox = document.getElementById('setting4');
-            tectonicPlatesCheckbox.addEventListener('change', function() {
-                if (tectonicPlatesCheckbox.checked) {
-                    // Change globe image if checkbox is checked
-                    Globe.globeImageUrl('static/tectonic_plates.png');
-                } else {
-                    // Revert back to default globe image
-                    Globe.globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg');
-                }
-            });
-
-            // Initialize the globe with the default magnitude and depth threshold
-            const initialThreshold = parseFloat(document.getElementById('mag_slider').value);
-            const initial_depth_threshold = parseFloat(document.getElementById('depth_slider').value);
-            updateGlobeData(response, Globe, initialThreshold, initial_depth_threshold);
-
-            // Slider functionality
-            const mag_slider = document.getElementById('mag_slider');
-            const mag_slider_value = document.getElementById('mag_slider-value');
-
-            const depth_slider = document.getElementById('depth_slider');
-            const depth_slider_value = document.getElementById('depth_slider-value');
-
-            depth_slider.addEventListener('input', function() {
-                const depthThreshold = parseFloat(depth_slider.value);  // Get the current value of the depth slider
-                depth_slider_value.textContent = `Depth: ${depthThreshold}`;  // Update the text content to show the current depth threshold
-
-                // Fetch the current magnitude threshold from the magnitude slider
-                const magnitudeThreshold = parseFloat(mag_slider.value);  // Dynamically get the magnitude threshold value
-
-                // Update the globe with the new magnitude and depth thresholds
-                updateGlobeData(response, Globe, magnitudeThreshold, depthThreshold);
-            });
-
-            mag_slider.addEventListener('input', function() {
-                const magnitudeThreshold = parseFloat(mag_slider.value);  // Get the current value of the magnitude slider
-                mag_slider_value.textContent = `Magnitude: ${magnitudeThreshold}`;  // Update the text content to show the current magnitude threshold
-
-                // Fetch the current depth threshold from the depth slider
-                const depthThreshold = parseFloat(depth_slider.value);  // Dynamically get the depth threshold value
-
-                // Update the globe with the new magnitude and depth thresholds
-                updateGlobeData(response, Globe, magnitudeThreshold, depthThreshold);
-            });
-        }
-
-        // Function to update the globe data based on the selected magnitude threshold
-        function updateGlobeData(response, Globe, magnitudeThreshold, depthThreshold) {
-            const colorInterpolator = (mag) => {
-                if (mag < 2.5) return "#00ff2c";
-                if (mag < 5.4) return "#0048ff";
-                if (mag < 6.0) return "#fec44f";
-                if (mag < 6.9) return "#d95f0e";
-                if (mag < 7.9) return "#f03b20";
-                return "#de2d26";
-            };
-
-            // Filter earthquake data based on magnitude and depth threshold
-            const filteredData = response.features.filter((feature) => {
-                const mag = feature.properties.mag;
-                const depth = feature.geometry.coordinates[2];
-
-                // Apply both magnitude and depth filters
-                return mag >= magnitudeThreshold && depth <= depthThreshold;
-            }).map((feature) => {
-                const geometry = feature.geometry.coordinates;
-                const lat = geometry[1]; // Latitude
-                const lng = geometry[0]; // Longitude
-                const mag = feature.properties.mag;
-                const depth = geometry[2];
-
-                return {
-                    lat: lat,
-                    lng: lng,
-                    maxR: depth / 20,
-                    propagationSpeed: mag / 2,
-                    repeatPeriod: Math.random() * 50000 + 2000
-                };
-            });
-
-            // Update the globe with filtered earthquake data
-            Globe.ringsData(filteredData)
-                .ringColor((d) => colorInterpolator(d.propagationSpeed))
-                .ringMaxRadius('maxR')
-                .ringPropagationSpeed('propagationSpeed')
-                .ringRepeatPeriod('repeatPeriod');
-        }
-
-        // Fetch the earthquake data and initialize the globe
-        d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson").then(createGlobeFromData);
-    </script>
+    // Fetch the earthquake data and initialize the globe
+    d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson").then(createGlobeFromData);
+</script>
 <!-- Audio -->
   <script src="static/js/audio.js"></script>
 
