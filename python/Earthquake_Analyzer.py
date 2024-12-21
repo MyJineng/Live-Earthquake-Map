@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import sqlite3
+import os
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
@@ -53,5 +54,7 @@ importances_df.set_index(importances_df[1], inplace=True)
 importances_df.drop(columns=1, inplace=True)
 importances_df.rename(columns={0: 'Feature Importances'}, inplace=True)
 importances_sorted = importances_df.sort_values(by='Feature Importances')
-importances_sorted.plot(kind='barh', color='lightgreen', title= 'Feature Importances for High Sig Earthquakes', legend=False)
-plt.show()
+importances_sorted.plot(kind='barh', color='lightgreen', title= 'Feature Importances for Above Average Magnitude Earthquakes', legend=False)
+
+plt.savefig(os.path.join('..', 'static', 'feature_importances.png'))
+plt.close()
