@@ -4,7 +4,7 @@
 export function setupSliders(mag_slider, mag_slider_value, depth_slider, depth_slider_value, updateGlobeData, response, Globe) {
     depth_slider.addEventListener('input', function () {
         const depthThreshold = parseFloat(depth_slider.value);
-        depth_slider_value.textContent = `Depth: ${depthThreshold}`;
+        depth_slider_value.textContent = `Depth: ${depthThreshold} Km`;
         const magnitudeThreshold = parseFloat(mag_slider.value);
         updateGlobeData(response, Globe, magnitudeThreshold, depthThreshold);
     });

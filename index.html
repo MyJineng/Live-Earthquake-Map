@@ -7,12 +7,10 @@
   <link rel="stylesheet" href="static/css/style.css">
 
   <script type="importmap">
-    {
-      "imports": {
-        "three": "//unpkg.com/three/build/three.module.js",
-        "three/addons/": "//unpkg.com/three/examples/jsm/"
-      }
-    }
+{ "imports": {
+    "three": "https://esm.sh/three",
+    "three/": "https://esm.sh/three/"
+  }}
   </script>
 
     <script type="module">
@@ -20,7 +18,7 @@
         window.THREE = THREE;
     </script>
 
-    <script src="//unpkg.com/three-globe" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/three-globe" defer></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 
@@ -119,7 +117,7 @@
 
     <div id="depth_slider-container">
         <input type="range" id="depth_slider" min="0" max="750" step="10" value="750">
-        <span id="depth_slider-value">Depth: 750</span>
+        <span id="depth_slider-value">Depth: 750 Km</span>
   </div>
 <!-- Globe Settings -->
   <script src="static/js/settings.js"></script>

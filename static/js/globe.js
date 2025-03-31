@@ -13,8 +13,8 @@ export function latLngToCartesian(lat, lng, radius) {
 // Function to initialize the globe setup
 export function initializeGlobe() {
     const Globe = new ThreeGlobe()
-        .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
-        .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png');
+        .globeImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-dark.jpg')
+        .bumpImageUrl('//cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png');
 
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -64,7 +64,7 @@ export function handleTectonicPlatesCheckbox(Globe) {
         if (tectonicPlatesCheckbox.checked) {
             Globe.globeImageUrl('static/tectonic_plates.png');
         } else {
-            Globe.globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg');
+            Globe.globeImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-dark.jpg');
         }
     });
 }
